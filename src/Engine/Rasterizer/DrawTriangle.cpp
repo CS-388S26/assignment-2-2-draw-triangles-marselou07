@@ -162,17 +162,34 @@ namespace Rasterizer
 
 	void DrawTriangle(const Vertex& v0, const Vertex& v1, const Vertex& v2)
 	{
+
+		
+
+
+
 	}
 
 	void DrawTriangleBiLinear(const Vertex& v0, const Vertex& v1, const Vertex& v2)
 	{
+
+
+
+
+
+
+
+
+
+
+
+
 	}
 
 	EDrawTriangleMethod GetDrawTriangleMethod() {
-		return {};
+		return currentDrawTriangle;
 	}
 
 	void SetDrawTriangleMethod(EDrawTriangleMethod triangleMethod) {
-
+		currentDrawTriangle = triangleMethod;
 	}
 }

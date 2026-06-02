@@ -39,7 +39,10 @@ namespace Rasterizer
 			DrawCircleParametric(center, radius, c);
 
 		}
-
+		else if (currentDrawCircle == eDC_MIDPOINT)
+		{
+			DrawCircleMidpoint(center, radius, c);
+		}
 	}
 
 	void DrawCircleNaive(const AEVec2& center, float radius, const Color& c)
@@ -88,6 +91,27 @@ namespace Rasterizer
 
 	void DrawCircleMidpoint(const AEVec2& center, float radius, const Color& c)
 	{
+		//Start from the top of the circle
+		int x = 0;
+		int y = Round(radius);
+		//Set the original differential point
+		int dp = 1 - y;
+		while (x <= y)
+		{
+			//Set the pixels and depending on the 
+			SetPixelEightWay(Round(center.x), Round(center.y), x, y, c);
+			x++;
+			if (dp <= 0)
+			{
+				dp += 2 * x + 1;
+			}
+			else
+			{
+				y--;
+				dp += 2 * x - 2 * y + 1;
+
+			}
+		}
 	}
 
 	void DrawCircleBresenham(const AEVec2& center, float radius, const Color& c)
