@@ -159,30 +159,94 @@ namespace Rasterizer
 	/// enum	EDrawLineMethod
 	///	\brief	Specifies which method should be used when drawing a line. 
 	EDrawTriangleMethod currentDrawTriangle = eDT_BILINEAR;
-
+	// TODO
+	/// -----------------------------------------------------------------------
+	/// \fn		DrawTriangle
+	/// \brief	Rasterizes a CCW triangle defined by v0, v1, v2. It delegates
+	///			the call to one of the methods implemented internally. See
+	///			enum EDrawTriangleMethod above. 
+	/// \param	v0	First triangle vertex (position/color).
+	///	\param	v1	Second triangle vertex (position/color).
+	///	\param	v2	Third triangle vertex (position/color).
 	void DrawTriangle(const Vertex& v0, const Vertex& v1, const Vertex& v2)
 	{
+		if (currentDrawTriangle == eDT_BILINEAR)
+		{
+			DrawTriangleBiLinear(v0, v1, v2);
+		}
+
+
+
+
+
+
+
+
+
 
 		
 
 
 
 	}
-
+	/// ------------------------------------------------------------------------
+	/// \fn		DrawTriangleBiLinear
+	/// \brief	Rasterizes a CCW triangle defined by v0, v1, v2, using the top
+	///			left method and the bi-linear interpolation method for color 
+	/// \param	v0	First triangle vertex (position/color).
+	///	\param	v1	Second triangle vertex (position/color).
+	///	\param	v2	Third triangle vertex (position/color).
 	void DrawTriangleBiLinear(const Vertex& v0, const Vertex& v1, const Vertex& v2)
 	{
+		const Vertex* top = &v0;
+		const Vertex* mid = &v1;
+		const Vertex* bottom = &v2;
+		bool mIdIsLeft = false;
+		Color c;
+		if (top->mPosition.y < mid->mPosition.y)
+		{
+			std::swap(top, mid);
 
+		}
+		if (mid->mPosition.y < bottom->mPosition.y)
+		{
+			std::swap(mid, bottom);
+		}
+		if (top->mPosition.y < mid->mPosition.y)
+		{
+			std::swap(top, mid);
+		}
+		AEVec2 TB = bottom->mPosition - top->mPosition;
+		AEVec2 TM = mid->mPosition - top->mPosition;
+		float dot = TB.x * TM.y - TB.y * TM.x;
+		if(dot <0)
+		{
+			mIdIsLeft = true;
 
-
-
-
-
-
-
-
-
-
-
+		}
+		else
+		{
+			mIdIsLeft = false;
+		}
+		c = top->mColor;
+		Color cstepTM = (mid->mColor - top->mColor) / (mid->mPosition.y - top->mPosition.y);
+		Color cstepTB = (bottom->mColor - top->mColor) / (bottom->mPosition.y - top->mPosition.y);
+		Color cstepMB = (bottom->mColor - mid->mColor) / (bottom->mPosition.y - mid->mPosition.y);
+		//Get the slopes
+		float slopetm = (mid->mPosition.x - top->mPosition.x) / (mid->mPosition.y - top->mPosition.y);
+		float slopetb = (bottom->mPosition.x - top->mPosition.x) / (bottom->mPosition.y - top->mPosition.y);
+		float slopemb = (bottom->mPosition.x - mid->mPosition.x) / (bottom->mPosition.y - mid->mPosition.y);
+		Color CL = c;
+		Color CR = c;
+		//cL += mIdisleft ? cstepTM : cstepTB
+		// cr += mIdisleft ? cstepTB : cstepTM
+		//cFinal = c;
+		int sY = Ceiling(top->mPosition.y);
+		//cStepLS = (CR - CL) / abs(XR - XL);
+		//Or t or s also valid name
+		//interpolate
+		//cFinal += cStepLS
+		//eL QUE DIBUJA
 	}
 
 	EDrawTriangleMethod GetDrawTriangleMethod() {

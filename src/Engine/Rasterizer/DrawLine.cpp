@@ -274,9 +274,9 @@ namespace Rasterizer
 			float ystep = delta_y > 0 ? abs(m) : -abs(m);
 			float y = p1.y;
 			Color cStep = (c2 - c1) / abs(delta_x);
-			for (int x = sX; x != eX; x += xstep, y += ystep)
+			for (int x = sX; x != eX; x += xstep, y += ystep, c += cStep)
 			{
-				c += cStep;
+				
 				FrameBuffer::SetPixel(x, Round(y), c);
 			}
 
@@ -289,10 +289,11 @@ namespace Rasterizer
 			int eY = Round(p2.y) + ystep;
 			float xstep = delta_x > 0 ? abs(1 / m) : -abs(1 / m);
 			float x = p1.x;
+			
 			Color cStep = (c2 - c1) / abs(delta_y);
-			for (int y = sY; y != eY; y += ystep, x += xstep)
+			for (int y = sY; y != eY; y += ystep, x += xstep,c += cStep)
 			{
-				c += cStep;
+
 				FrameBuffer::SetPixel(Round(x), y, c);
 			}
 		}
