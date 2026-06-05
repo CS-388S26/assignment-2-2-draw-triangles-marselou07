@@ -174,20 +174,6 @@ namespace Rasterizer
 		{
 			DrawTriangleBiLinear(v0, v1, v2);
 		}
-
-
-
-
-
-
-
-
-
-
-		
-
-
-
 	}
 	/// ------------------------------------------------------------------------
 	/// \fn		DrawTriangleBiLinear
@@ -217,7 +203,7 @@ namespace Rasterizer
 		AEVec2 TB = bottom.mPosition - top.mPosition;
 		AEVec2 TM = mid.mPosition - top.mPosition;
 		float dot = TB.x * TM.y - TB.y * TM.x;
-		if(dot <0)
+		if(dot < 0)
 		{
 			mIdIsLeft = true;
 
@@ -227,9 +213,9 @@ namespace Rasterizer
 			mIdIsLeft = false;
 		}
 		//All the colors
-		Color cstepTM = (mid.mColor - top.mColor) / (mid.mPosition.y - top.mPosition.y);
-		Color cstepTB = (bottom.mColor - top.mColor) / (bottom.mPosition.y - top.mPosition.y);
-		Color cstepMB = (bottom.mColor - mid.mColor) / (bottom.mPosition.y - mid.mPosition.y);
+		Color cstepTM = (mid.mColor - top.mColor) / abs(mid.mPosition.y - top.mPosition.y);
+		Color cstepTB = (bottom.mColor - top.mColor) / abs(bottom.mPosition.y - top.mPosition.y);
+		Color cstepMB = (bottom.mColor - mid.mColor) / abs(bottom.mPosition.y - mid.mPosition.y);
 		Color CL = top.mColor;
 		Color CR = top.mColor;
 		Color cStepLS;
@@ -245,13 +231,14 @@ namespace Rasterizer
 		//The  middle region
 		for (y = sY; y >= Ceiling(mid.mPosition.y) + 1; --y)
 		{
+			//Go back to the begging of the right to avoid problems on color
 			cFinal = CL;
-			cStepLS = (CR -CL)/fabs(xright-xleft);
-			for ( int x = Floor(xleft); x <= Floor(xright) - 1; x++)
+			cStepLS = (CR -CL)/abs(xright-xleft);
+			for ( int x = Floor(xleft); x <= Floor(xright) - 1; ++x)
 			{
-				cFinal += cStepLS;
-				FrameBuffer::SetPixel(x, y, cFinal);
 				
+				FrameBuffer::SetPixel(x, y, cFinal);
+				cFinal += cStepLS;
 			}
 			//Decrease the left and right x
 			xleft -= mIdIsLeft ? slopetm : slopetb;
@@ -259,26 +246,31 @@ namespace Rasterizer
 			//Change the color
 			CL += mIdIsLeft ? cstepTM : cstepTB;
 			CR += mIdIsLeft ? cstepTB : cstepTM;
+
 		}
+		//Set both color and x to the correct position to avoid errors
 		if (mIdIsLeft)
 		{
 			xleft = mid.mPosition.x;
-
+			CL = mid.mColor;
+			
 		}
 		else
 		{
 			xright = mid.mPosition.x;
+			CR = mid.mColor;
 			
 		}
-		for (; y >= Ceiling(bottom.mPosition.y); --y)
+		for (; y >= Ceiling(bottom.mPosition.y)+1; --y)
 		{
+			//Go back to the begging of the right to avoid problems on color
 			cFinal = CL;
-			cStepLS = (CR - CL) / fabs(xright - xleft);
-			for ( int x = Floor(xleft); x <= Floor(xright) - 1; x++)
+			cStepLS = (CR - CL) / abs(xright - xleft);
+			for ( int x = Floor(xleft); x <= Floor(xright) - 1; ++x)
 			{
-				cFinal += cStepLS;
-				FrameBuffer::SetPixel(x, y, cFinal);
 				
+				FrameBuffer::SetPixel(x, y, cFinal);
+				cFinal += cStepLS;
 			}
 			//Decrease the left and right x
 			xleft -= mIdIsLeft ? slopemb : slopetb;
@@ -288,14 +280,6 @@ namespace Rasterizer
 			CR += mIdIsLeft ? cstepTB : cstepMB;
 
 		}
-		//cL += mIdIsLeft ? cstepTM : cstepTB
-		// cr += mIdIsLeft ? cstepTB : cstepTM
-		//cFinal = c;
-		//cStepLS = (CR - CL) / abs(XR - XL);
-		//Or t or s also valid name
-		//interpolate
-		//cFinal += cStepLS
-		//eL QUE DIBUJA
 	}
 
 	EDrawTriangleMethod GetDrawTriangleMethod() {
