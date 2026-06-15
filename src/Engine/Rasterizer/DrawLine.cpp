@@ -289,7 +289,6 @@ namespace Rasterizer
 			int eY = Round(p2.y) + ystep;
 			float xstep = delta_x > 0 ? abs(1 / m) : -abs(1 / m);
 			float x = p1.x;
-			
 			Color cStep = (c2 - c1) / abs(delta_y);
 			for (int y = sY; y != eY; y += ystep, x += xstep,c += cStep)
 			{
