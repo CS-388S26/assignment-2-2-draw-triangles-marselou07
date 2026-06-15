@@ -174,6 +174,12 @@ namespace Rasterizer
 		{
 			DrawTriangleBiLinear(v0, v1, v2);
 		}
+		else if (currentDrawTriangle == eDT_PLANE_NORMAL)
+		{
+			DrawTrianglePlaneNormal(v0, v1, v2);
+
+		}
+
 	}
 	/// ------------------------------------------------------------------------
 	/// \fn		DrawTriangleBiLinear
@@ -281,7 +287,135 @@ namespace Rasterizer
 
 		}
 	}
+	void DrawTrianglePlaneNormal(const Vertex& v0, const Vertex& v1, const Vertex& v2)
+	{
+		Vertex top = v0;
+		Vertex mid = v1;
+		Vertex bottom = v2;
+		bool mIdIsLeft = false;
+		if (top.mPosition.y < mid.mPosition.y)
+		{
+			std::swap(top, mid);
+		}
+		if (mid.mPosition.y < bottom.mPosition.y)
+		{
+			std::swap(mid, bottom);
+		}
+		if (top.mPosition.y < mid.mPosition.y)
+		{
+			std::swap(top, mid);
+		}
+		AEVec2 TB = bottom.mPosition - top.mPosition;
+		AEVec2 TM = mid.mPosition - top.mPosition;
+		float dot = TB.x * TM.y - TB.y * TM.x;
+		if (dot < 0)
+		{
+			mIdIsLeft = true;
 
+		}
+		else
+		{
+			mIdIsLeft = false;
+		}
+		//Get the slopes and constant vector
+		float slopetm = (mid.mPosition.x - top.mPosition.x) / (mid.mPosition.y - top.mPosition.y);
+		float slopetb = (bottom.mPosition.x - top.mPosition.x) / (bottom.mPosition.y - top.mPosition.y);
+		float slopemb = (bottom.mPosition.x - mid.mPosition.x) / (bottom.mPosition.y - mid.mPosition.y);
+		int sY = Ceiling(top.mPosition.y);
+		float xright = Round(top.mPosition.x);
+		float xleft = Round(top.mPosition.x);
+		int y;
+		//Get the normal of each component
+		AEVec3 V0V1r = {mid.mPosition.x- top.mPosition.x,mid.mPosition.y - top.mPosition.y,mid.mColor.r-top.mColor.r };
+		AEVec3 V0V2r= { bottom.mPosition.x - top.mPosition.x,bottom.mPosition.y - top.mPosition.y,bottom.mColor.r - top.mColor.r };
+		AEVec3 normalr= V0V1r.Cross(V0V2r);
+		normalr.NormalizeThis();
+
+		AEVec3 V0V1g = { mid.mPosition.x - top.mPosition.x,mid.mPosition.y - top.mPosition.y,mid.mColor.r - top.mColor.g };
+		AEVec3 V0V2g = { bottom.mPosition.x - top.mPosition.x,bottom.mPosition.y - top.mPosition.y,bottom.mColor.r - top.mColor.g };
+		AEVec3 normalg = V0V1g.Cross(V0V2g);
+		normalg.NormalizeThis();
+
+		AEVec3 V0V1b = { mid.mPosition.x - top.mPosition.x,mid.mPosition.y - top.mPosition.y,mid.mColor.r - top.mColor.b };
+		AEVec3 V0V2b = { bottom.mPosition.x - top.mPosition.x,bottom.mPosition.y - top.mPosition.y,bottom.mColor.r - top.mColor.b };
+		AEVec3 normalb = V0V1b.Cross(V0V2b);
+		normalb.NormalizeThis();
+
+		AEVec3 V0V1a = { mid.mPosition.x - top.mPosition.x,mid.mPosition.y - top.mPosition.y,mid.mColor.r - top.mColor.a };
+		AEVec3 V0V2a = { bottom.mPosition.x - top.mPosition.x,bottom.mPosition.y - top.mPosition.y,bottom.mColor.r - top.mColor.a };
+		AEVec3 normala = V0V1a.Cross(V0V2a);
+		normala.NormalizeThis();
+		Color cFinal = top.mColor;
+		for (y = sY; y >= Ceiling(mid.mPosition.y) + 1; --y)
+		{
+			
+			for (int x = Floor(xleft); x != Floor(xleft) - 1; x++)
+			{
+				cFinal.r += -normalr.x / normalr.z;
+				cFinal.g += -normalg.x / normalg.z;
+				cFinal.b += -normalb.x / normalb.z;
+				cFinal.a += -normala.x / normala.z;
+				FrameBuffer::SetPixel(x, y, cFinal);
+
+			}
+			//Decrease the left and right x
+			xleft -= mIdIsLeft ? slopemb : slopetb;
+			xright -= mIdIsLeft ? slopetb : slopemb;
+		}
+		if (mIdIsLeft) 
+		{
+			xleft = mid.mPosition.x;
+		}
+		else
+		{
+			xright = mid.mPosition.x;
+		}
+	}
+	void DrawTriangleBarycentric(const Vertex& v0, const Vertex& v1, const Vertex& v2)
+	{
+		Vertex top = v0;
+		Vertex mid = v1;
+		Vertex bottom = v2;
+		bool mIdIsLeft = false;
+		if (top.mPosition.y < mid.mPosition.y)
+		{
+			std::swap(top, mid);
+		}
+		if (mid.mPosition.y < bottom.mPosition.y)
+		{
+			std::swap(mid, bottom);
+		}
+		if (top.mPosition.y < mid.mPosition.y)
+		{
+			std::swap(top, mid);
+		}
+		AEVec2 TB = bottom.mPosition - top.mPosition;
+		AEVec2 TM = mid.mPosition - top.mPosition;
+		float dot = TB.x * TM.y - TB.y * TM.x;
+		if (dot < 0)
+		{
+			mIdIsLeft = true;
+
+		}
+		else
+		{
+			mIdIsLeft = false;
+		}
+		//Get the slopes and constant vector
+		float slopetm = (mid.mPosition.x - top.mPosition.x) / (mid.mPosition.y - top.mPosition.y);
+		float slopetb = (bottom.mPosition.x - top.mPosition.x) / (bottom.mPosition.y - top.mPosition.y);
+		float slopemb = (bottom.mPosition.x - mid.mPosition.x) / (bottom.mPosition.y - mid.mPosition.y);
+		int sY = Ceiling(top.mPosition.y);
+		float xright = Round(top.mPosition.x);
+		float xleft = Round(top.mPosition.x);
+		int y;
+
+
+
+
+
+
+	}
 	EDrawTriangleMethod GetDrawTriangleMethod() {
 		return currentDrawTriangle;
 	}
