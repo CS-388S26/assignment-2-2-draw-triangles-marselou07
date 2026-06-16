@@ -325,42 +325,75 @@ namespace Rasterizer
 		float xright = Round(top.mPosition.x);
 		float xleft = Round(top.mPosition.x);
 		int y;
-		//Get the normal of each component
-		AEVec3 V0V1r = {mid.mPosition.x- top.mPosition.x,mid.mPosition.y - top.mPosition.y,mid.mColor.r-top.mColor.r };
-		AEVec3 V0V2r= { bottom.mPosition.x - top.mPosition.x,bottom.mPosition.y - top.mPosition.y,bottom.mColor.r - top.mColor.r };
-		AEVec3 normalr= V0V1r.Cross(V0V2r);
-		normalr.NormalizeThis();
-
-		AEVec3 V0V1g = { mid.mPosition.x - top.mPosition.x,mid.mPosition.y - top.mPosition.y,mid.mColor.r - top.mColor.g };
-		AEVec3 V0V2g = { bottom.mPosition.x - top.mPosition.x,bottom.mPosition.y - top.mPosition.y,bottom.mColor.r - top.mColor.g };
-		AEVec3 normalg = V0V1g.Cross(V0V2g);
-		normalg.NormalizeThis();
-
-		AEVec3 V0V1b = { mid.mPosition.x - top.mPosition.x,mid.mPosition.y - top.mPosition.y,mid.mColor.r - top.mColor.b };
-		AEVec3 V0V2b = { bottom.mPosition.x - top.mPosition.x,bottom.mPosition.y - top.mPosition.y,bottom.mColor.r - top.mColor.b };
-		AEVec3 normalb = V0V1b.Cross(V0V2b);
-		normalb.NormalizeThis();
-
-		AEVec3 V0V1a = { mid.mPosition.x - top.mPosition.x,mid.mPosition.y - top.mPosition.y,mid.mColor.r - top.mColor.a };
-		AEVec3 V0V2a = { bottom.mPosition.x - top.mPosition.x,bottom.mPosition.y - top.mPosition.y,bottom.mColor.r - top.mColor.a };
-		AEVec3 normala = V0V1a.Cross(V0V2a);
-		normala.NormalizeThis();
-		Color cFinal = top.mColor;
+		//Get the normal of each component "For now also get D"
+		//R component
+		AEVec3 V0V1r = 
+		{mid.mPosition.x- top.mPosition.x,
+		mid.mPosition.y - top.mPosition.y,
+		mid.mColor.r-top.mColor.r };
+		AEVec3 V0V2r= 
+		{ bottom.mPosition.x - top.mPosition.x
+		,bottom.mPosition.y - top.mPosition.y
+		,bottom.mColor.r - top.mColor.r };
+		AEVec3 nR= V0V1r.Cross(V0V2r);
+		float Drdx = -(nR.x) / nR.z;
+		float Drdy = -(nR.y) / nR.z;
+		//G component
+		AEVec3 V0V1g = 
+		{ mid.mPosition.x - top.mPosition.x
+		,mid.mPosition.y - top.mPosition.y
+		,mid.mColor.g - top.mColor.g };
+		AEVec3 V0V2g = { bottom.mPosition.x - top.mPosition.x,bottom.mPosition.y - top.mPosition.y,bottom.mColor.g - top.mColor.g };
+		AEVec3 nG = V0V1g.Cross(V0V2g);
+		float Dgdx = -(nG.x) / nG.z;
+		float Dgdy = -(nG.y) / nG.z;
+		//B component
+		AEVec3 V0V1b = { mid.mPosition.x - top.mPosition.x,mid.mPosition.y - top.mPosition.y,mid.mColor.b - top.mColor.b };
+		AEVec3 V0V2b = { bottom.mPosition.x - top.mPosition.x,bottom.mPosition.y - top.mPosition.y,bottom.mColor.b - top.mColor.b };
+		AEVec3 nB = V0V1b.Cross(V0V2b);
+		float Dbdx = -(nB.x) / nB.z;
+		float Dbdy = -(nB.y) / nB.z;
+		//A component
+		AEVec3 V0V1a = { mid.mPosition.x - top.mPosition.x,mid.mPosition.y - top.mPosition.y,mid.mColor.a - top.mColor.a };
+		AEVec3 V0V2a = { bottom.mPosition.x - top.mPosition.x,bottom.mPosition.y - top.mPosition.y,bottom.mColor.a - top.mColor.a };
+		AEVec3 nA = V0V1a.Cross(V0V2a);
+		float Dadx = -(nA.x) / nA.z;
+		float Dady = -(nA.y) / nA.z;
+		//The color set
+		Color cLeft = top.mColor;
+		//First try the original version they try to optimize it
 		for (y = sY; y >= Ceiling(mid.mPosition.y) + 1; --y)
 		{
-			
-			for (int x = Floor(xleft); x != Floor(xleft) - 1; x++)
+			Color cFinal = cLeft;
+			for (int x = Floor(xleft); x <= Floor(xright) - 1; x++)
 			{
-				cFinal.r += -normalr.x / normalr.z;
-				cFinal.g += -normalg.x / normalg.z;
-				cFinal.b += -normalb.x / normalb.z;
-				cFinal.a += -normala.x / normala.z;
 				FrameBuffer::SetPixel(x, y, cFinal);
+				cFinal.r += Drdx;
+				cFinal.g += Dgdx;
+				cFinal.b += Dbdx;
+				cFinal.a += Dadx;
+				
 
 			}
 			//Decrease the left and right x
-			xleft -= mIdIsLeft ? slopemb : slopetb;
-			xright -= mIdIsLeft ? slopetb : slopemb;
+			xleft -= mIdIsLeft ? slopetm : slopetb;
+			xright -= mIdIsLeft ? slopetb : slopetm;
+			if (mIdIsLeft)
+			{
+				cLeft.r -= Drdy + slopetm * Drdx;
+				cLeft.g -= Dgdy + slopetm * Dgdx;
+				cLeft.b -= Dbdy + slopetm * Dbdx;
+				cLeft.a -= Dady + slopetm * Dadx;
+
+
+			}
+			else
+			{
+				cLeft.r -= Drdy + slopetb * Drdx;
+				cLeft.g -= Dgdy + slopetb * Dgdx;
+				cLeft.b -= Dbdy + slopetb * Dbdx;
+				cLeft.a -= Dady + slopetb * Dadx;
+			}
 		}
 		if (mIdIsLeft) 
 		{
@@ -369,6 +402,39 @@ namespace Rasterizer
 		else
 		{
 			xright = mid.mPosition.x;
+		}
+		for (; y >= Ceiling(bottom.mPosition.y) + 1; --y)
+		{
+			Color cFinal = cLeft;
+			for (int x = Floor(xleft); x <= Floor(xright) - 1; x++)
+			{
+				FrameBuffer::SetPixel(x, y, cFinal);
+				cFinal.r += Drdx;
+				cFinal.g += Dgdx;
+				cFinal.b += Dbdx;
+				cFinal.a += Dadx;
+				
+
+			}
+			//Decrease the left and right x
+			xleft -= mIdIsLeft ? slopemb : slopetb;
+			xright -= mIdIsLeft ? slopetb : slopemb;
+			if (mIdIsLeft)
+			{
+				cLeft.r -= Drdy + slopemb * Drdx;
+				cLeft.g -= Dgdy + slopemb * Dgdx;
+				cLeft.b -= Dbdy + slopemb * Dbdx;
+				cLeft.a -= Dady + slopemb * Dadx;
+
+
+			}
+			else
+			{
+				cLeft.r -= Drdy + slopetb * Drdx;
+				cLeft.g -= Dgdy + slopetb * Dgdx;
+				cLeft.b -= Dbdy + slopetb * Dbdx;
+				cLeft.a -= Dady + slopetb * Dadx;
+			}
 		}
 	}
 	void DrawTriangleBarycentric(const Vertex& v0, const Vertex& v1, const Vertex& v2)
