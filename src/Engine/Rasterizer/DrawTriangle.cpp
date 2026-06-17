@@ -179,6 +179,11 @@ namespace Rasterizer
 			DrawTrianglePlaneNormal(v0, v1, v2);
 
 		}
+		else if (currentDrawTriangle == eDT_BARYCENTRIC) 
+		{
+			DrawTriangleBarycentric(v0, v1, v2);
+		
+		}
 
 	}
 	/// ------------------------------------------------------------------------
@@ -455,30 +460,35 @@ namespace Rasterizer
 		{
 			std::swap(top, mid);
 		}
-		AEVec2 TB = bottom.mPosition - top.mPosition;
-		AEVec2 TM = mid.mPosition - top.mPosition;
-		float dot = TB.x * TM.y - TB.y * TM.x;
-		if (dot < 0)
-		{
-			mIdIsLeft = true;
 
-		}
-		else
-		{
-			mIdIsLeft = false;
-		}
 		//Get the slopes and constant vector
-		float slopetm = (mid.mPosition.x - top.mPosition.x) / (mid.mPosition.y - top.mPosition.y);
-		float slopetb = (bottom.mPosition.x - top.mPosition.x) / (bottom.mPosition.y - top.mPosition.y);
-		float slopemb = (bottom.mPosition.x - mid.mPosition.x) / (bottom.mPosition.y - mid.mPosition.y);
-		int sY = Ceiling(top.mPosition.y);
-		float xright = Round(top.mPosition.x);
-		float xleft = Round(top.mPosition.x);
-		int y;
-
-
-
-
+		float y;
+		float xmin = min(v0.mPosition.x, v1.mPosition.x, v2.mPosition.x);
+		float xmax = max(v0.mPosition.x, v1.mPosition.x, v2.mPosition.x);
+		float ymin = min(v0.mPosition.y, v1.mPosition.y, v2.mPosition.y);
+		float ymax = max(v0.mPosition.y, v1.mPosition.y, v2.mPosition.y);
+		AEVec2 v0v1 = v1.mPosition - v0.mPosition;
+		AEVec2 v0v2 = v2.mPosition - v0.mPosition;
+		float n = v0v1.x * v0v2.y - v0v1.y * v0v2.x;
+		for(y = Round(ymin);y <= Round(ymax);++y)
+		{ 
+			for (float x = Round(xmin); x <= Round(xmax); ++x)
+			{
+				AEVec2 P = { x,y };
+				AEVec2 PV1 = P - v1.mPosition;
+				AEVec2 PV2 = P - v2.mPosition;
+				AEVec2 PV0 = P - v0.mPosition;
+				float Lambada_1 = (PV2.x  * PV0.y - PV0.x* PV2.y)/n;
+				float Lambada_2 = (PV0.x * PV1.y - PV0.y*PV1.x) / n;
+				float Lambada_0 = 1.f - Lambada_1 - Lambada_2;
+				if (Lambada_0 < 0 || Lambada_1 < 0 || Lambada_2 < 0)
+				{
+					continue;
+				}
+				Color c = top.mColor * Lambada_0 + mid.mColor * Lambada_1 + bottom.mColor * Lambada_2;
+				FrameBuffer::SetPixel(Round(x), Round(y), c);
+			}
+		}
 
 
 	}
